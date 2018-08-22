@@ -1,0 +1,13 @@
+EXE_INC = \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(FOAM_INST_DIR)/OpenQBMM/src/eigenSolver/lnInclude \
+    -I$(FOAM_INST_DIR)/OpenQBMM/src/mappedList \
+    -I$(FOAM_INST_DIR)/OpenQBMM/src/quadratureMethods/momentSets/lnInclude \
+    -I$(FOAM_INST_DIR)/OpenQBMM/src/quadratureMethods/momentInversion/lnInclude
+
+LIB_LIBS = \
+    -lfiniteVolume \
+    -L$(FOAM_USER_LIBBIN) \
+    -leigenSolver \
+    -lmomentSets \
+    -lmomentInversion

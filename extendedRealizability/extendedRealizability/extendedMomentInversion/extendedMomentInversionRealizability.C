@@ -195,11 +195,41 @@ void Foam::extendedMomentInversionRealizability::invert(const univariateMomentSe
         scalar sigmaHigh = sigMax;
         momentsToMomentsStar(sigmaHigh, m, mStarHigh);
 
+        // Check if sigmaHigh is solution
+        if (mStarHigh.isOnMomentSpaceBoundary() && mStarHigh.nRealizableMoments() == nRealizableMoments)
+        {
+            sigma_ = sigmaHigh;
+            momentInverter_().invert(mStarHigh);
+
+            secondaryQuadrature
+            (
+                momentInverter_().weights(),
+                momentInverter_().abscissae()
+            );
+
+            return;
+        }
+
         // Apply Ridder's algorithm to find sigma
         for (label iter = 0; iter < maxSigmaIter_; iter++)
         {
             scalar sigmaMid = (sigma_ + sigmaHigh)/2.0;
             momentsToMomentsStar(sigmaMid, m, mStarMid);
+
+            // Check if sigmaMid is solution
+            if (mStarMid.isOnMomentSpaceBoundary() && mStarMid.nRealizableMoments() == nRealizableMoments)
+            {
+                sigma_ = sigmaMid;
+                momentInverter_().invert(mStarMid);
+
+                secondaryQuadrature
+                (
+                    momentInverter_().weights(),
+                    momentInverter_().abscissae()
+                );
+
+                return;
+            }
 
             // Update position of the first non-realizable parameter 
             // (beta, canonical moments or zeta)
@@ -225,6 +255,21 @@ void Foam::extendedMomentInversionRealizability::invert(const univariateMomentSe
 
             scalar sigmaNew = sigmaMid + (sigmaMid - sigma_)*sign(fLow - fHigh)*fMid/s;
             momentsToMomentsStar(sigmaNew, m, mStarNew);
+
+            // Check if sigmaNew is solution
+            if (mStarNew.isOnMomentSpaceBoundary() && mStarNew.nRealizableMoments() == nRealizableMoments)
+            {
+                sigma_ = sigmaNew;
+                momentInverter_().invert(mStarNew);
+
+                secondaryQuadrature
+                (
+                    momentInverter_().weights(),
+                    momentInverter_().abscissae()
+                );
+
+                return;
+            }
 
             // Refine search
             // Get the highest value value between sigma_, sigmaMid and sigmaNew 

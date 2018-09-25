@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "gammaEQMOMRealizability.H"
+#include "gammaEQMOM.H"
 #include "scalar.H"
 #include "scalarMatrices.H"
 #include "constants.H"
@@ -33,12 +33,12 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(gammaEQMOMRealizability, 0);
+    defineTypeNameAndDebug(gammaEQMOM, 0);
 
     addToRunTimeSelectionTable
     (
-        extendedMomentInversionRealizability,
-        gammaEQMOMRealizability,
+        kernelDensityFunction,
+        gammaEQMOM,
         dictionary
     );
 }
@@ -46,25 +46,23 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::gammaEQMOMRealizability::gammaEQMOMRealizability
+Foam::gammaEQMOM::gammaEQMOM
 (
-    const dictionary& dict,
-    const label nMoments,
-    const label nSecondaryNodes
+    const dictionary& dict
 )
 :
-    extendedMomentInversionRealizability(dict, nMoments, nSecondaryNodes)
+    kernelDensityFunction(dict)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::gammaEQMOMRealizability::~gammaEQMOMRealizability()
+Foam::gammaEQMOM::~gammaEQMOM()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-Foam::scalar Foam::gammaEQMOMRealizability::secondaryAbscissa
+Foam::scalar Foam::gammaEQMOM::secondaryAbscissa
 (
     scalar primaryAbscissa,
     scalar secondaryAbscissa,
@@ -74,7 +72,7 @@ Foam::scalar Foam::gammaEQMOMRealizability::secondaryAbscissa
     return sigma*secondaryAbscissa;
 }
 
-void Foam::gammaEQMOMRealizability::momentsStarToMoments
+void Foam::gammaEQMOM::momentsStarToMoments
 (
     scalar sigma,
     univariateMomentSet& moments,
@@ -150,7 +148,7 @@ void Foam::gammaEQMOMRealizability::momentsStarToMoments
     }
 }
 
-void Foam::gammaEQMOMRealizability::momentsToMomentsStar
+void Foam::gammaEQMOM::momentsToMomentsStar
 (
     scalar sigma,
     const univariateMomentSet& moments,
@@ -219,7 +217,7 @@ void Foam::gammaEQMOMRealizability::momentsToMomentsStar
     }
 }
 
-Foam::scalar Foam::gammaEQMOMRealizability::m2N
+Foam::scalar Foam::gammaEQMOM::m2N
 (
     scalar sigma,
     const univariateMomentSet& momentsStar
@@ -240,7 +238,7 @@ Foam::scalar Foam::gammaEQMOMRealizability::m2N
     return GREAT;
 }
 
-void Foam::gammaEQMOMRealizability::recurrenceRelation
+void Foam::gammaEQMOM::recurrenceRelation
 (
     scalarList& a,
     scalarList& b,
@@ -263,7 +261,7 @@ void Foam::gammaEQMOMRealizability::recurrenceRelation
     }
 }
 
-Foam::scalar Foam::gammaEQMOMRealizability::sigmaMax(univariateMomentSet& moments)
+Foam::scalar Foam::gammaEQMOM::sigmaMax(univariateMomentSet& moments)
 {
     scalar sigmaZeta1 =
         (moments[0]*moments[2] - moments[1]*moments[1])/(moments[0]*moments[1]);
@@ -271,7 +269,11 @@ Foam::scalar Foam::gammaEQMOMRealizability::sigmaMax(univariateMomentSet& moment
     return sigmaZeta1;
 }
 
-Foam::tmp<Foam::scalarField> Foam::gammaEQMOMRealizability::f(const scalarField& x) const
+Foam::tmp<Foam::scalarField> Foam::gammaEQMOM::f(
+            const scalarField& x, 
+            scalar primaryAbscissa, 
+            scalar sigma
+) const
 {
     tmp<scalarField> tmpY
     (
@@ -279,16 +281,12 @@ Foam::tmp<Foam::scalarField> Foam::gammaEQMOMRealizability::f(const scalarField&
     );
     scalarField& y = tmpY.ref();
 
-    for (label pNodei = 0; pNodei < nPrimaryNodes_; pNodei++)
-    {
-        scalar lambda = sqr(primaryAbscissae_[pNodei]/sigma_);
-        scalar theta = primaryAbscissae_[pNodei]/lambda;
+    scalar lambda = sqr(primaryAbscissa/sigma);
+    scalar theta = primaryAbscissa/lambda;
 
-        y +=
-            pow(x, lambda - 1.0)*exp(-x/theta)
-           /(gamma(lambda)*pow(theta, lambda) + VSMALL)
-           *primaryWeights_[pNodei];
-    }
+    y +=
+        pow(x, lambda - 1.0)*exp(-x/theta)
+       /(gamma(lambda)*pow(theta, lambda) + VSMALL);
 
     return tmpY;
 }

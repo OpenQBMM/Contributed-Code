@@ -1,6 +1,0 @@
-extendedMomentInversion/extendedMomentInversionRealizability.C
-extendedMomentInversion/newExtendedMomentInversionRealizability.C
-gamma/gammaEQMOMRealizability.C
-lognormal/lognormalEQMOMRealizability.C
-
-LIB = $(FOAM_USER_LIBBIN)/libextendedMomentInversionRealizability

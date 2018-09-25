@@ -1,7 +1,7 @@
-# Extended Moment Inversion Through Realizability of Transformed Moments
+# Extended Moment Inversion Through Realizability of Degenerate Moments
 
 Implementation of the algorithm by Pigou et al. (2018) for extended moment inversion 
-using the realizability of transformed moments.
+using the realizability of degenerate moments.
 
 **Reference**
 
@@ -19,22 +19,56 @@ The following libraries are required:
 
 ## Installing
 
-The library and test script may be installed through:
+1. Replace the folder *src/quadratureMethods/momentInversion/univariate/extended* 
+for the one provided here.
+
+2. In *src/quadratureMethods/momentInversion/Make/files*, replace :
 
 ```
-./Allwmake
+univariate/extended/extendedMomentInversion/extendedMomentInversion.C
+univariate/extended/extendedMomentInversion/newExtendedMomentInversion.C
+univariate/extended/gamma/gammaEQMOM.C
+univariate/extended/lognormal/lognormalEQMOM.C
+univariate/extended/beta/betaEQMOM.C
+```
+for:
+```
+univariate/extended/extendedMomentInversions/extendedMomentInversion/extendedMomentInversion.C
+univariate/extended/extendedMomentInversions/extendedMomentInversion/newExtendedMomentInversion.C
+univariate/extended/extendedMomentInversions/highestMomentReconstruction/highestMomentReconstruction.C
+univariate/extended/extendedMomentInversions/mStarRealizability/mStarRealizability.C
+
+univariate/extended/kernelDensityFunctions/kernelDensityFunction/kernelDensityFunction.C
+univariate/extended/kernelDensityFunctions/kernelDensityFunction/newKernelDensityFunction.C
+univariate/extended/kernelDensityFunctions/gamma/gammaEQMOM.C
+univariate/extended/kernelDensityFunctions/lognormal/lognormalEQMOM.C
+univariate/extended/kernelDensityFunctions/beta/betaEQMOM.C
 ```
 
-## Test script
+3. Apply the patch provided by *canonical_moments.patch*.
 
-The test script performs the inversion of a given set of moments. It is executed with:
+4. Recompile OpenQBMM.
 
+## How to Use
+
+The provided implementation should be backwards compatible with the existing
+cases, with no syntax changes required. The previously implemented method 
+*highestMomentReconstruction* is considered the default one.
+
+To use the new inversion algorithm, add to the *extendedMomentInversion* dict in
+*quadratureProperties*:
 ```
-cd Test-extendedRealizability
-Test-ExtendedMomentInversionRealizability
+extendedMomentInversionMethod	mStarRealizability;
 ```
 
-To change the moment set, edit the file *Test-ExtendedMomentInversion.C* and recompile.
+Three convergence criteria are available; *sigmaTolRel* and *targetFunctionTol*
+follow the original paper proposal, and *sigmaTol* was added for easier 
+comparison to the previous method. One can use, for example:
+```
+sigmaTol           0.0;
+sigmaTolRel        1.0e-11;
+targetFunctionTol  1.0e-11;
+```
 
 ## Authors
 

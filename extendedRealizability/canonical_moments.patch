@@ -1,0 +1,97 @@
+diff --git a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.C b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.C
+index c043387..263b38b 100644
+--- a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.C
++++ b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.C
+@@ -47,6 +47,7 @@ Foam::univariateMomentSet::univariateMomentSet
+     beta_(),
+     zeta_(nMoments_ - 1),
+     negativeZeta_(0),
++    canonicalMoments_(nMoments_ - 1),
+     degenerate_(false),
+     fullyRealizable_(true),
+     subsetRealizable_(true),
+@@ -138,11 +139,11 @@ void Foam::univariateMomentSet::checkCanonicalMoments
+     const label nZeta
+ )
+ {
+-    scalarList canonicalMoments(nZeta, 0.0);
++    canonicalMoments_ = 0.0;
+ 
+-    canonicalMoments[0] = zeta[0];
++    canonicalMoments_[0] = zeta[0];
+ 
+-    if (mag(canonicalMoments[0] - 1.0) <= SMALL)
++    if (mag(canonicalMoments_[0] - 1.0) <= SMALL)
+     {
+         nRealizableMoments_ = 2;
+         onMomentSpaceBoundary_ = true;
+@@ -152,10 +153,10 @@ void Foam::univariateMomentSet::checkCanonicalMoments
+ 
+     for (label zetai = 1; zetai < nZeta; zetai++)
+     {
+-        canonicalMoments[zetai]
+-            = zeta[zetai]/(1.0 - canonicalMoments[zetai - 1]);
++        canonicalMoments_[zetai]
++            = zeta[zetai]/(1.0 - canonicalMoments_[zetai - 1]);
+ 
+-        if (canonicalMoments[zetai] < 0.0 || canonicalMoments[zetai] > 1.0)
++        if (canonicalMoments_[zetai] < 0.0 || canonicalMoments_[zetai] > 1.0)
+         {
+             nRealizableMoments_ = zetai + 1;
+ 
+@@ -163,8 +164,8 @@ void Foam::univariateMomentSet::checkCanonicalMoments
+         }
+         else if
+         (
+-            mag(canonicalMoments[zetai]) <= SMALL
+-         || mag(canonicalMoments[zetai] - 1.0) <= SMALL
++            mag(canonicalMoments_[zetai]) <= SMALL
++         || mag(canonicalMoments_[zetai] - 1.0) <= SMALL
+         )
+         {
+             nRealizableMoments_ = zetai + 2;
+diff --git a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.H b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.H
+index 9724ef5..3290b5d 100644
+--- a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.H
++++ b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSet.H
+@@ -66,6 +66,9 @@ class univariateMomentSet
+         //- Position of first negative zeta
+         label negativeZeta_;
+ 
++        //- Canonical moments to check moment realizability
++        scalarList canonicalMoments_;
++
+         //- Bool to indicate if moment set is degenerate, with only the
+         //  zero-order moment realizable
+         bool degenerate_;
+@@ -150,6 +153,9 @@ public:
+         //- Returns zeta_k values for the moment set
+         inline scalarList& zetas();
+ 
++        //- Returns canonical moment values for the moment set
++        inline scalarList& canonicalMoments();
++
+         //- Returns degenerate status of the moment set
+         inline bool isDegenerate();
+ 
+diff --git a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSetI.H b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSetI.H
+index 3f69340..0199de7 100644
+--- a/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSetI.H
++++ b/src/quadratureMethods/momentSets/univariateMomentSet/univariateMomentSetI.H
+@@ -66,6 +66,16 @@ Foam::scalarList& Foam::univariateMomentSet::zetas()
+     return zeta_;
+ }
+ 
++Foam::scalarList& Foam::univariateMomentSet::canonicalMoments()
++{
++    if (!realizabilityChecked_)
++    {
++        checkRealizability(false);
++    }
++
++    return canonicalMoments_;
++}
++
+ bool Foam::univariateMomentSet::isDegenerate()
+ {
+     // Checking if moments of order higher than zero are null

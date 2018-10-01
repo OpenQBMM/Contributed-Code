@@ -22,68 +22,70 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::gammaEQMOMRealizability
+    Foam::kernelDensityFunction
 
 Description
-    Extended quadrature method of moments with gamma kernel density functions.
-
-    References
-    \verbatim
-        "An extended quadrature method of moments for population balance
-        equations"
-        C Yuan, F Laurent, R O Fox
-        Journal of Aerosol Science
-        Volume 51, Pages 1-23, 2012
-    \endverbatim
-
-    \verbatim
-        "The theory of canonical moments with applications in Statistics,
-        Probability and Analysis"
-        H Dette, W J Studden
-        Wiley & Sons, 1997
-    \endverbatim
+    Base class for kernel density functions for the extended quadrature method
+    of moments.
 
 SourceFiles
-    gammaEQMOMRealizability.C
+    kernelDensityFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gammaEQMOMRealizability_H
-#define gammaEQMOMRealizability_H
+#ifndef kernelDensityFunction_H
+#define kernelDensityFunction_H
 
-#include "extendedMomentInversionRealizability.H"
+#include "univariateMomentSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
-                      Class gammaEQMOMRealizability Declaration
+                      Class kernelDensityFunction Declaration
 \*---------------------------------------------------------------------------*/
 
-class gammaEQMOMRealizability
-:
-    public extendedMomentInversionRealizability
+class kernelDensityFunction
 {
 public:
 
     //- Runtime type information
-    TypeName("gamma");
+    TypeName("kernelDensityFunction");
 
+
+    // Declare runtime construction
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            kernelDensityFunction,
+            dictionary,
+            (
+                const dictionary& dict
+            ),
+            (dict)
+        );
 
     // Constructors
 
-        //- Construct from a dictionary and label
-        gammaEQMOMRealizability
+        //- Construct from a dictionary
+        kernelDensityFunction
         (
-            const dictionary& dict,
-            const label nMoments,
-            const label nSecondaryNodes
+            const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~gammaEQMOMRealizability();
+    virtual ~kernelDensityFunction();
+
+
+    // Selectors
+
+        static autoPtr<kernelDensityFunction> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -94,7 +96,7 @@ public:
             scalar primaryAbscissa,
             scalar secondaryAbscissa,
             scalar sigma
-        );
+        ) = 0;
 
         //- Compute moments from starred moments
         virtual void momentsStarToMoments
@@ -102,7 +104,7 @@ public:
             scalar sigma,
             univariateMomentSet& moments,
             const univariateMomentSet& momentsStar
-        );
+        ) = 0;
 
         //- Compute the starred moments
         virtual void momentsToMomentsStar
@@ -110,14 +112,14 @@ public:
             scalar sigma,
             const univariateMomentSet& moments,
             univariateMomentSet& momentsStar
-        );
+        ) = 0;
 
         //- Compute the last moment from starred moments
         virtual scalar m2N
         (
             scalar sigma,
             const univariateMomentSet& momentsStar
-        );
+        ) = 0;
 
         //- Recurrence relation for polynomials orthogonal to kernel function
         virtual void recurrenceRelation
@@ -126,13 +128,18 @@ public:
             scalarList& b,
             scalar primaryAbscissa,
             scalar sigma
-        );
+        ) = 0;
 
         //- Compute maximum value of sigma to ensure realizability
-        virtual scalar sigmaMax(univariateMomentSet& moments);
+        virtual scalar sigmaMax(univariateMomentSet& moments) = 0;
 
-        //- Return the sum of the kernel density functions at a field of points
-        virtual tmp<scalarField> f(const scalarField& x) const;
+        //- Return the kernel density function at a field of points
+        virtual tmp<scalarField> f(
+            const scalarField& x, 
+            scalar primaryAbscissa, 
+            scalar sigma
+        ) const = 0;
+
 };
 
 

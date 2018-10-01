@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "lognormalEQMOMRealizability.H"
+#include "lognormalEQMOM.H"
 #include "scalar.H"
 #include "scalarMatrices.H"
 #include "constants.H"
@@ -33,12 +33,12 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(lognormalEQMOMRealizability, 0);
+    defineTypeNameAndDebug(lognormalEQMOM, 0);
 
     addToRunTimeSelectionTable
     (
-        extendedMomentInversionRealizability,
-        lognormalEQMOMRealizability,
+        kernelDensityFunction,
+        lognormalEQMOM,
         dictionary
     );
 }
@@ -46,25 +46,23 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lognormalEQMOMRealizability::lognormalEQMOMRealizability
+Foam::lognormalEQMOM::lognormalEQMOM
 (
-    const dictionary& dict,
-    const label nMoments,
-    const label nSecondaryNodes
+    const dictionary& dict
 )
 :
-    extendedMomentInversionRealizability(dict, nMoments, nSecondaryNodes)
+    kernelDensityFunction(dict)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::lognormalEQMOMRealizability::~lognormalEQMOMRealizability()
+Foam::lognormalEQMOM::~lognormalEQMOM()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-Foam::scalar Foam::lognormalEQMOMRealizability::secondaryAbscissa
+Foam::scalar Foam::lognormalEQMOM::secondaryAbscissa
 (
     scalar primaryAbscissa,
     scalar secondaryAbscissa,
@@ -74,7 +72,7 @@ Foam::scalar Foam::lognormalEQMOMRealizability::secondaryAbscissa
     return primaryAbscissa*secondaryAbscissa;
 }
 
-void Foam::lognormalEQMOMRealizability::momentsStarToMoments
+void Foam::lognormalEQMOM::momentsStarToMoments
 (
     scalar sigma,
     univariateMomentSet& moments,
@@ -89,7 +87,7 @@ void Foam::lognormalEQMOMRealizability::momentsStarToMoments
     }
 }
 
-void Foam::lognormalEQMOMRealizability::momentsToMomentsStar
+void Foam::lognormalEQMOM::momentsToMomentsStar
 (
     scalar sigma,
     const univariateMomentSet& moments,
@@ -104,7 +102,7 @@ void Foam::lognormalEQMOMRealizability::momentsToMomentsStar
     }
 }
 
-Foam::scalar Foam::lognormalEQMOMRealizability::m2N
+Foam::scalar Foam::lognormalEQMOM::m2N
 (
     scalar sigma,
     const univariateMomentSet& momentsStar
@@ -123,7 +121,7 @@ Foam::scalar Foam::lognormalEQMOMRealizability::m2N
     return GREAT;
 }
 
-void Foam::lognormalEQMOMRealizability::recurrenceRelation
+void Foam::lognormalEQMOM::recurrenceRelation
 (
     scalarList& a,
     scalarList& b,
@@ -150,7 +148,7 @@ void Foam::lognormalEQMOMRealizability::recurrenceRelation
     }
 }
 
-Foam::scalar Foam::lognormalEQMOMRealizability::sigmaMax(univariateMomentSet& moments)
+Foam::scalar Foam::lognormalEQMOM::sigmaMax(univariateMomentSet& moments)
 {
     label nRealizableMoments = moments.nRealizableMoments();
 
@@ -168,7 +166,11 @@ Foam::scalar Foam::lognormalEQMOMRealizability::sigmaMax(univariateMomentSet& mo
     return sigmaZeta1;
 }
 
-Foam::tmp<Foam::scalarField> Foam::lognormalEQMOMRealizability::f(const scalarField& x) const
+Foam::tmp<Foam::scalarField> Foam::lognormalEQMOM::f(
+            const scalarField& x, 
+            scalar primaryAbscissa, 
+            scalar sigma
+) const
 {
     tmp<scalarField> tmpY
     (
@@ -176,15 +178,9 @@ Foam::tmp<Foam::scalarField> Foam::lognormalEQMOMRealizability::f(const scalarFi
     );
     scalarField& y = tmpY.ref();
 
-    for (label pNodei = 0; pNodei < nPrimaryNodes_; pNodei++)
-    {
-        scalar mu = log(primaryAbscissae_[pNodei] + SMALL) - sqr(sigma_)/2.0;
-
-        y +=
-            exp(-sqr(log(x + SMALL) - mu)/(2.0*sqr(sigma_)))
-           /(x*sigma_*sqrt(2.0*Foam::constant::mathematical::pi))
-           *primaryWeights_[pNodei];
-    }
+    y +=
+        exp(-sqr(log(x) - log(primaryAbscissa))/(2.0*sqr(sigma)))
+       /(x*sigma*sqrt(2.0*Foam::constant::mathematical::pi));
 
     return tmpY;
 }

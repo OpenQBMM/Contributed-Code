@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::extendedMomentInversionRealizability
+    Foam::extendedMomentInversion
 
 Description
     Abstract class to allow run-time selection of the algorithm to be used
@@ -50,22 +50,14 @@ Description
         Oxford University Press, 2004
     \endverbatim
 
-    \verbatim
-        "New developments of the Extended Quadrature Method of Moments to 
-        solve Population Balance Equations"
-        M Pigou, J Morchain, P Fede, M-I Penet, G Laronze
-        Journal of Computational Physics
-        Volume 365, Pages 243-268, 2018
-    \endverbatim
-
 SourceFiles
-    extendedMomentInversionRealizability.C
-    newextendedMomentInversionRealizability.C
+    extendedMomentInversion.C
+    newExtendedMomentInversion.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef extendedMomentInversionRealizability_H
-#define extendedMomentInversionRealizability_H
+#ifndef extendedMomentInversion_H
+#define extendedMomentInversion_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,6 +65,7 @@ SourceFiles
 #include "scalarList.H"
 #include "scalarMatrices.H"
 #include "dictionary.H"
+#include "kernelDensityFunction.H"
 #include "runTimeSelectionTables.H"
 #include "univariateMomentSet.H"
 #include "univariateMomentInversion.H"
@@ -81,59 +74,29 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class extendedMomentInversionRealizability Declaration
+                     Class extendedMomentInversion Declaration
 \*---------------------------------------------------------------------------*/
 
-class extendedMomentInversionRealizability
+class extendedMomentInversion
 {
-    // Private data
-
-        //- Univariate moment inversion method
-        autoPtr<univariateMomentInversion> momentInverter_;
-
-
     // Private member functions
 
-        //- Reset inverter
-        void reset();
-
-        //- Compute secondary weigths and abscissae
-        void secondaryQuadrature
-        (
-            const scalarList& pWeights,
-            const scalarList& pAbscissae
-        );
-
-        //- Return list of parameters for moment set realizability
-        //  (beta, canonical moments or zeta)
-        scalarList realizabilityParameter
-        (
-            univariateMomentSet& momentsStar
-        );
-
-        //- Return position of first parameter that makes the moment set not realizable
-        label firstNonRealizableParameter
-        (
-            univariateMomentSet& momentsStar
-        );
-
-        //- Compute target function whose root is sigma_
-        scalar targetFunction
-        (
-            univariateMomentSet& momentsStar,
-            const label realizabilityParameterI
-        );
-
         //- Disallow default bitwise copy construct
-        extendedMomentInversionRealizability(const extendedMomentInversionRealizability&);
+        extendedMomentInversion(const extendedMomentInversion&);
 
         //- Disallow default bitwise assignment
-        void operator=(const extendedMomentInversionRealizability&);
+        void operator=(const extendedMomentInversion&);
 
 
 protected:
 
     // Protected data
+
+        //- Univariate moment inversion method
+        autoPtr<univariateMomentInversion> momentInverter_;
+
+        //- Kernel density function
+        autoPtr<kernelDensityFunction> kernel_;
 
         //- Number of moments
         label nMoments_;
@@ -168,18 +131,9 @@ protected:
         //- Maximum number of iterations allowed to find sigma_
         label maxSigmaIter_;
 
-        //- Tolerance on moment conservation
-        scalar momentsTol_;
-
         //- Minimum allowed value of the parameter sigma of the kernel density
         //  function. Below this value, QMOM is used.
         scalar sigmaMin_;
-
-        //- Tolerance for the change in the sigma parameter
-        scalar sigmaTol_;
-
-        //- Tolerance for the target function
-        scalar targetFunctionTol_;
 
         //- Bool to track values of sigma_ that lead to unrealizable moments
         bool foundUnrealizableSigma_;
@@ -187,62 +141,26 @@ protected:
         //- Bool to track if sigma = 0 is root
         bool nullSigma_;
 
-    //- Protected member functions
+    // Protected member functions
 
-        //- Computes kernel density function from abscissa and sigma
-        virtual scalar secondaryAbscissa
-        (
-            scalar primaryAbscissa,
-            scalar secondaryAbscissa,
-            scalar sigma
-        ) = 0;
+        //- Reset inverter
+        void reset();
 
-        //- Compute moments from starred moments
-        virtual void momentsStarToMoments
-        (
-            scalar sigma,
-            univariateMomentSet& moments,
-            const univariateMomentSet& momentsStar
-        ) = 0;
+		//- Invert moments if the distribution is singular
+        void invertSingular(univariateMomentSet& moments);
 
-        //- Compute the starred moments from moments
-        virtual void momentsToMomentsStar
+        //- Compute secondary weigths and abscissae
+        void secondaryQuadrature
         (
-            scalar sigma,
-            const univariateMomentSet& moments,
-            univariateMomentSet& momentsStar
-        ) = 0;
-
-        //- Compute the last moment from starred moments
-        virtual scalar m2N
-        (
-            scalar sigma,
-            const univariateMomentSet& momentsStar
-        ) = 0;
-
-        //- Recurrence relation for polynomials orthogonal to kernel function
-        virtual void recurrenceRelation
-        (
-            scalarList& a,
-            scalarList& b,
-            scalar primaryAbscissa,
-            scalar sigma
-        ) = 0;
-
-        //- Compute maximum value of sigma to ensure realizability
-        //  The value is exact for the two-node case. For cases with a larger
-        //  number of nodes, this provides an over-estimation of the maximum
-        //  value of the sigma parameter which ensures moment realizability.
-        virtual scalar sigmaMax
-        (
-            univariateMomentSet& moments
-        ) = 0;
+            const scalarList& pWeights,
+            const scalarList& pAbscissae
+        );
 
 
 public:
 
     //- Runtime type information
-    TypeName("extendedMomentInversionRealizability");
+    TypeName("extendedMomentInversion");
 
 
     // Declare runtime construction
@@ -250,7 +168,7 @@ public:
         declareRunTimeSelectionTable
         (
             autoPtr,
-            extendedMomentInversionRealizability,
+            extendedMomentInversion,
             dictionary,
             (
                 const dictionary& dict,
@@ -263,7 +181,7 @@ public:
     // Constructors
 
         // Construct from dictionary and label
-        extendedMomentInversionRealizability
+        extendedMomentInversion
         (
             const dictionary& dict,
             const label nMoments,
@@ -272,12 +190,12 @@ public:
 
 
     //- Destructor
-    virtual ~extendedMomentInversionRealizability();
+    virtual ~extendedMomentInversion();
 
 
     // Selectors
 
-        static autoPtr<extendedMomentInversionRealizability> New
+        static autoPtr<extendedMomentInversion> New
         (
             const dictionary& dict,
             const label nMoments,
@@ -288,7 +206,7 @@ public:
     // Member Functions
 
         //- Invert moments to find weight, abscissae and sigma
-        void invert(const univariateMomentSet& moments);
+        virtual void invert(const univariateMomentSet& moments) = 0;
 
         //- Return number of moments
         inline label nMoments()
@@ -337,9 +255,9 @@ public:
         {
             return secondaryAbscissae_;
         }
-
+		
         //- Return the sum of the kernel density functions at a field of points
-        virtual tmp<scalarField> f(const scalarField& x) const = 0;
+        tmp<scalarField> f(const scalarField& x) const;
 
 };
 

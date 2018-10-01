@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014-2015 Alberto Passalacqua
+    \\  /    A nd           | Copyright (C) 2014-2018 Alberto Passalacqua
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,19 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::lognormalEQMOMRealizability
+    Foam::betaEQMOM
 
 Description
-    Extended quadrature method of moments with log-normal kernel density
-    functions.
+    Extended quadrature method of moments with beta kernel density functions.
 
     References
     \verbatim
-        "An extended quadrature-based moment method with log-normal kernel
-        density functions"
-        E Madadi-Kandjani, A Passalacqua
-        Chemical Engineering Science
-        Volume 131, Pages 323-339, 2015
+        "An extended quadrature method of moments for population balance
+        equations"
+        C Yuan, F Laurent, R O Fox
+        Journal of Aerosol Science
+        Volume 51, Pages 1-23, 2012
     \endverbatim
 
     \verbatim
@@ -44,55 +43,45 @@ Description
         Wiley & Sons, 1997
     \endverbatim
 
-    \verbatim
-        "A general approximation method for solving integrals containing a
-        lognormal weighting function"
-        M Wilck
-        Journal of Aerosol Science
-        Volume 32, Pages 1111-1116, 2001
-    \endverbatim
-
 SourceFiles
-    lognormalEQMOMRealizability.C
+    betaEQMOM.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lognormalEQMOMRealizability_H
-#define lognormalEQMOMRealizability_H
+#ifndef betaEQMOM_H
+#define betaEQMOM_H
 
-#include "extendedMomentInversionRealizability.H"
+#include "kernelDensityFunction.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
-                      Class lognormalEQMOMRealizability Declaration
+                      Class betaEQMOM Declaration
 \*---------------------------------------------------------------------------*/
 
-class lognormalEQMOMRealizability
+class betaEQMOM
 :
-    public extendedMomentInversionRealizability
+    public kernelDensityFunction
 {
 public:
 
     //- Runtime type information
-    TypeName("lognormal");
+    TypeName("beta");
 
 
     // Constructors
 
-        //- Construct from a dictionary and label
-        lognormalEQMOMRealizability
+        //- Construct from a dictionary
+        betaEQMOM
         (
-            const dictionary& dict,
-            const label nMoments,
-            const label nSecondaryNodes
+            const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~lognormalEQMOMRealizability();
+    virtual ~betaEQMOM();
 
 
     // Member Functions
@@ -140,8 +129,12 @@ public:
         //- Compute maximum value of sigma to ensure realizability
         virtual scalar sigmaMax(univariateMomentSet& moments);
 
-        //- Return the sum of the kernel density functions at a field of points
-        virtual tmp<scalarField> f(const scalarField& x) const;
+        //- Return the kernel density function at a field of points
+        virtual tmp<scalarField> f(
+            const scalarField& x, 
+            scalar primaryAbscissa, 
+            scalar sigma
+        ) const;
 
 };
 

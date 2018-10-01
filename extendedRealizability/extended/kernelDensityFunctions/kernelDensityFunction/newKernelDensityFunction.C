@@ -23,36 +23,34 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "extendedMomentInversionRealizability.H"
+#include "kernelDensityFunction.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::extendedMomentInversionRealizability> Foam::extendedMomentInversionRealizability::New
+Foam::autoPtr<Foam::kernelDensityFunction> Foam::kernelDensityFunction::New
 (
-    const dictionary& dict,
-    const label nMoments,
-    const label nSecondaryNodes
+    const dictionary& dict
 )
 {
-    word extendedMomentInversionRealizabilityType(dict.lookup("extendedMomentInversionRealizability"));
+    word kernelDensityFunctionType(dict.lookup("extendedMomentInversion"));
 
-    Info<< "Selecting extendedMomentInversionRealizability: "
-        << extendedMomentInversionRealizabilityType << endl;
+    Info<< "Selecting kernelDensityFunction: "
+        << kernelDensityFunctionType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(extendedMomentInversionRealizabilityType);
+        dictionaryConstructorTablePtr_->find(kernelDensityFunctionType);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown extendedMomentInversionRealizabilityType type "
-            << extendedMomentInversionRealizabilityType << endl << endl
-            << "Valid extendedMomentInversionRealizability types are : " << endl
+            << "Unknown kernelDensityFunctionType type "
+            << kernelDensityFunctionType << endl << endl
+            << "Valid kernelDensityFunction types are : " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return cstrIter()(dict, nMoments, nSecondaryNodes);
+    return cstrIter()(dict);
 }
 
 
